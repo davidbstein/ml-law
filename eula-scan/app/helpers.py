@@ -3,91 +3,89 @@ import difflib
 import requests
 import time
 
-from .model import (
+from model import (
     add_TOS,
     create_company,
+    flag_company_error,
     list_companies,
-    lookup_diff,
+    lookup_company,
     lookup_TOS,
     lookup_URL,
     update_company,
+    update_last_scan
 )
-
 
 def demo_scan(url):
     return _pull_TOS(url)
 
-
 def scan_company_tos(company_id):
     url = lookup_URL(company_id)
-    tos = _pull_TOS(url)
+    try:
+        tos = _pull_TOS(url)
+    except Exception as e:
+        print("HANDING ERROR...")
+        flag_company_error(company_id, "{}: {}".format(type(e), e))
+        return False
     lookup_TOS(company_id)
     update_result = _do_update_check(company_id)
-    if not update_result:
-        print("no change")
-        pass # nullop
+    update_last_scan(company_id)
+    if not update_result['new']:
+        return False
     else:
         add_TOS(
             company_id,
             update_result["text"],
             update_result["formatted_text"],
-            update_result.get("delta"),
-            update_result.get("formatted_delta"),
             int(time.time())
-       )
-    # TODO: log error and update status to show most recent error
+        )
+        return True
 
+def cleanup_terms_instance(terms_instance, settings):
+    terms_instance['text'] = _apply_settings(terms_instance['text'], settings)
+    return terms_instance
 
-def _iterative_diff_function(a, b):
-    difflib._check_types(a, b, '','','','','\n')
-    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(lambda x: x==' ',a,b).get_opcodes():
-        if tag == "equal":
-            yield (tag, a[i1:i2])
-        if tag == "delete":
-            yield (tag, a[i1:i2])
-        if tag == "insert":
-            yield (tag, b[j1:j2])
-        if tag == "replace":
-            yield (tag, a[i1:i2], b[j1:j2])
+def _apply_settings(s, settings):
+    if not settings:
+        return s
+    return (s
+        .partition(settings.get("filter_start", ""))[2]
+        .rpartition(settings.get("filter_end", ""))[0]
+        )
 
-
-def _diff_function(a, b):
-    return list(iterative_diff_function(a, b))
-
+def _diff_test(a, b, settings):
+    a = _apply_settings(a, settings)
+    b = _apply_settings(b, settings)
+    return a == b
 
 def _pull_TOS(url):
     r = requests.get(url, timeout=10)
     assert r.status_code == 200, 'error, code: ' + r.status_code
-    soup = bs4.BeautifulSoup(r.text)
+    soup = bs4.BeautifulSoup(r.text, features="html.parser")
     return {
-        "text": soup.body.text,  #"\n\n".join(p.text for p in ps),
-        "formatted_text": str(soup.body),     #"\n\n".join(str(p) for p in ps),
+        "text": soup.body.text,
+        "formatted_text": str(soup.body),
     }
-
 
 def _do_update_check(company_id):
     old_tos = lookup_TOS(company_id)
-    url = lookup_URL(company_id)
-    new_tos = pull_TOS(url)
+    company = lookup_company(company_id)
+    new_tos = _pull_TOS(company['company']['url'])
     if old_tos:
-        text_diff = _diff_function(
+        if _diff_test(
             old_tos['text'],
             new_tos['text'],
-        )
-        format_diff = _diff_function(
-            old_tos['formatted_text'],
-            new_tos['formatted_text'],
-        )
-        if len(text_diff) == len(format_diff) == 1:
-            if (text_diff[0][0] == format_diff[0][0] == "equal"):
-                return None
-        return {
-            "text": new_tos["text"],
-            "formatted_text": new_tos["formatted_text"],
-            "delta": text_diff,
-            "formatted_delta": format_diff,
-            "new": False,
-        }
+            company['company']['settings']):
+            return {
+                "text": new_tos["text"],
+                "formatted_text": new_tos["formatted_text"],
+                "new": False,
+            }
+        else:
+            return {
+                "text": new_tos["text"],
+                "formatted_text": new_tos["formatted_text"],
+                "new": True,
+            }
     else:
         return {
             "text": new_tos["text"],

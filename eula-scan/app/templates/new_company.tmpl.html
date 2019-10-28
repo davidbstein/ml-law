@@ -1,0 +1,80 @@
+{% extends "base.tmpl.html" %}
+
+{% block title %} Add company to scanner {% endblock %}
+
+{% block head %}
+  <script>
+  var res;
+    function preview() {
+      var target_url = document.getElementById("company-url").value;
+      var filter_start = document.getElementById("filter-start").value;
+      var filter_end = document.getElementById("filter-end").value;
+      fetch(new Request("/preview"), {
+        method: "POST",
+        body: JSON.stringify({url: target_url})
+      })
+      .then(r => r.json())
+      .then((response) => {
+        res = response;
+        var start_idx = response.indexOf(filter_start);
+        var end_idx = response.lastIndexOf(filter_end);
+        var filtered_response = response.substring(start_idx, end_idx+filter_end.length);
+        document.getElementById("preview-target").innerHTML = filtered_response;
+      });
+    }
+  </script>
+{% endblock %}
+
+{% block content %}
+  <form class="company-input-form" method="post"
+    {% if companyinfo %}
+      action="/company/{{companyinfo["id"]}}/update"
+    {% else %}
+      action="/company/new/submit"
+    {% endif %}>
+
+    <input type="hidden" name="company_id" value=
+    {% if companyinfo %}{{companyinfo['id']}}
+    {% else %}-1{% endif %}>
+
+    <div class="form-label" id="company-name-label">
+      Company Name<br/>
+      <input type="text" placeholder="Company Name" name="name"
+      {% if companyinfo %}value={{companyinfo["name"]}}{% endif %}>
+    </div>
+
+    <div class="form-label" id="company-url-label">
+      TOS url <br/>
+      <input id="company-url" type="text" placeholder="http://company.com/terms" name="tos_url"
+      {% if companyinfo %}value={{companyinfo["url"]}}{% endif %}>
+    </div>
+
+    <div class="form-label" id="filter-start-label">
+      Beginning of terms (everything before the first instance of this phrase will be ignored)<br/>
+    <input id="filter-start" type="text" placeholder="Terms of Service" name="filter_start"
+    {% if companyinfo %}value={{companyinfo["filter_start"]}}{% endif %}>
+    </div>
+
+    <div class="form-label" id="filter-end-label">
+      End of terms (everything after the last instance of this phrase will be ignored)<br/>
+    <input id="filter-end" type="text" placeholder="end of last sentence." name="filter_end"
+    {% if companyinfo %}value={{companyinfo["filter_end"]}}{% endif %}>
+    </div>
+
+    <div class="form-buttons" id="buttons">
+      <button onclick="preview()" type="button"> preview tos </button>
+      <button type="submit">
+        {% if companyinfo %}
+          update {{companyinfo["name"]}}
+        {% else %}
+          add new company
+        {% endif %}
+      </button>
+    </div>
+  </form>
+  <div id="preview-container" class="viewbox">
+    <h2>Preview:</h2>
+    <div id="preview-target" class="viewbox-content"></div>
+  </div>
+  <script> preview(); </script>
+{% endblock %}

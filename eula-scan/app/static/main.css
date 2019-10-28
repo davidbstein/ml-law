@@ -1,0 +1,148 @@
+/*
+#8900e1
+#57068c
+#330662
+#220337
+
+
+#6d6d6d
+#b8b8b8
+#d6d6d6
+#f2f2f2
+*/
+
+header {
+  padding: 16px;
+  background: #330662;
+  color: #f2f2f2;
+  font-size: 24px;
+  font-family: sans-serif;
+  font-weight: light;
+}
+
+header a {
+  color: #f2f2f2;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 24px;
+  margin-right: 32px;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+#content a {
+  color: #330662;
+  text-decoration: none;
+}
+#content a:hover {
+  color: #330662;
+  text-decoration: underline;
+}
+
+#content {
+  padding: 16px;
+}
+
+#company-info, #company-settings {
+  margin: 16px 0;
+}
+
+.company-input-form {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: space-around;
+}
+#ci-last-error {
+  font-weight: bold;
+  white-space: pre-wrap;
+}
+.form-label {
+  min-width: 400px;
+  margin: 16px;
+}
+
+.form-label input[type='text'] {
+  width: 100%;
+}
+
+#preview-target {
+  white-space: pre-wrap;
+}
+
+.viewbox {
+  margin-top: 32px;
+  border: 2px solid #6d6d6d;
+  border-radius: 5px;
+}
+
+.viewbox h2 {
+  background: #57068c;
+  color: #f2f2f2;
+  padding: 16px;
+}
+
+.viewbox-content {
+  font-family: monospace;
+  padding: 16px;
+}
+
+.delta-view {
+  border: 1px solid #d6d6d6;
+  border-radius: 2px;
+  margin-bottom: 16px;
+  box-shadow: 1px 2px 2px 0px #999;
+}
+.delta-heading {
+  background: #8900e1;
+  color: #f2f2f2;
+  padding: 8px;
+  cursor: pointer;
+}
+.delta-content, .original-content {
+  padding: 8px;
+  overflow-y: hidden;
+}
+.hidden-content .delta-content, .hidden-content .original-content {
+  height: 0px;
+}
+.diff_next {
+  display: none;
+}
+th.diff_header {
+  background: #aaa;
+  width: 50%;
+}
+td.diff_header {
+  padding: 0;
+  word-break: inherit;
+  color: #aaa;
+  font-size: 10px;
+  width:auto;
+}
+td {
+  padding: 0 8px;
+  white-space: normal;
+  word-break: break-all;
+  width: 50%;
+}
+tr:hover {
+  background: #ccc;
+}
+.diff_add {
+  background: #faa;
+}
+.diff_sub {
+  background: #afa;
+}
+.original-content {
+  white-space: pre-wrap;
+}
+
+
+code {
+  color: #57068c;
+  font-weight: bold;
+}

@@ -1,0 +1,16 @@
+<html>
+<head>
+  <link href="/static/reset.css" rel="stylesheet">
+  <link href="/static/tabulator.css" rel="stylesheet">
+  <link href="/static/main.css" rel="stylesheet">
+  <script type="text/javascript" src="/static/tabulator.min.js"></script>
+  <title>{% block title %}{% endblock %} - EULA scanner</title>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header> <a href="/"> EULA scanner </a> {{self.title()}} </header>
+  <div id="content">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

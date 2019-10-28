@@ -1,0 +1,105 @@
+{% extends "base.tmpl.html" %}
+
+{% block title %} Company View - {{company_info['name']}} {% endblock %}
+
+{% block head %}
+  <script>
+  function toggle_hidden(ts){
+    var el = document.getElementById(ts);
+    el.parentElement.classList.toggle("hidden-content")
+  }
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div id="ci-company-name">
+    <h1>{{company_info['name']}}</h1>
+    <div id="rescan"> <a href="/company/{{company_info['id']}}/force_scan">
+      scan for changes now
+    </a></div>
+    <div id="rescan"> <a href="/company/{{company_info['id']}}/edit">
+      edit company settings
+    </a></div>
+  </div>
+  <div id="company-info">
+    <div id="ci-tos">
+      TOS url: <a href="{{company_info['url']}}">{{company_info['url']}}</a>
+    </div><div id="ci-last-scan">
+      Last Scanned: {{company_info['last_scan'] | timestamp_formatter}}
+    </div>
+    {% if company_info['last_error'] %}
+    <div id="ci-last-error">
+      Last Error: {{company_info['last_error'] | timestamp_formatter}}
+      <code>Error info: {{company_info['status']}}</code>
+    </div>
+    {% endif %}
+    <div id="company-settings">
+      {% if company_info['settings'] %}
+        {% set settings = company_info['settings'] %}
+        {% if settings['filter_start'] %}
+          <div id="ci-filter-start">
+            Ignoring everything before the first instance of the phrase
+            <code> "{{ settings['filter_start']}}" </code>
+          </div>
+        {% endif %}
+        {% if settings['filter_end'] %}
+          <div id="ci-filter-start">
+            Ignoring everything after the last instance of the phrase
+            <code> "{{ settings['filter_end']}}" </code>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+
+  <div id="deltas" class="viewbox">
+    <h2> history of changes </h2>
+    {{build_changes_list(terms)}}
+  </div>
+{% endblock %}
+
+{% macro build_changes_list(terms_list) %}
+  <div class="viewbox-content">
+    {% if terms_list | length > 0 %}
+    <div class="delta-view hidden-content">
+      {% set terms = terms_list[0] %}
+      <div class="delta-heading"
+            id="current-content-block"
+            onclick="toggle_hidden('current-content-block')">
+        most recent scan: {{ terms['start_date'] | timestamp_formatter }}
+      </div>
+      <div class="original-content">
+        {{ terms['text'] }}
+      </div>
+    </div>
+    {% for terms_idx in (range(terms_list|length - 1)) %}
+      {% set terms = terms_list[terms_idx] %}
+      {% set next_terms = terms_list[terms_idx+1] %}
+      <div class="delta-view hidden-content">
+        <div class="delta-heading"
+              id="{{terms['start_date']}}"
+              onclick="toggle_hidden({{terms['start_date']}})">
+          + Changes from {{ terms['start_date'] | timestamp_formatter }}
+        </div>
+        <div class="delta-content">
+          {{ make_diff(terms['text'], next_terms['text']) | safe }}
+        </div>
+      </div>
+    {% endfor %}
+    <div class="delta-view hidden-content">
+      {% set terms = terms_list[terms_list|length-1] %}
+      <div class="delta-heading"
+            id="{{terms['start_date']}}"
+            onclick="toggle_hidden({{terms['start_date']}})">
+        Original scan on: {{ terms['start_date'] | timestamp_formatter }}
+      </div>
+      <div class="original-content">
+        {{ terms['text'] }}
+      </div>
+    </div>
+    {% else %}
+      this has never been scanned.
+    {% endif %}
+  </div>
+{%- endmacro %}

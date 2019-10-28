@@ -1,0 +1,87 @@
+{% extends "base.tmpl.html" %}
+
+{% block title %} Overview {% endblock %}
+
+{% block head %}
+  <script>
+  var table;
+  function loadData(){
+    var r = new Request("/company_list");
+    fetch(r)
+      .then(response => response.json())
+      .then(data => {
+        table.setData(data.map(e => {
+          return {
+            name: e.name,
+            view: `/company/${e.id}`,
+            edit: `/company/${e.id}/edit`,
+            status: e.last_error ? "broken" : e.last_scan ? "scanner working" : "never scanned",
+            last_scan:  e.last_scan ? new Date(e.last_scan * 1000) : undefined,
+            errors: e.last_error ? new Date(e.last_error * 1000) : undefined,
+            url: e.url,
+          }
+        }
+        ))
+      });
+  }
+  function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      var later = function() {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  };
+
+  update_filter = debounce(function(){
+    var el = document.getElementById("searchbox");
+    table.setFilter("name", "like", el.value);
+    console.log(el);
+  }, 200, false);
+
+  window.onload = function(){
+    table = new Tabulator("#company-table", {
+      //layout:"fitDataFill",
+      layout:"fitColumns",
+      tooltips:false,
+      addRowPos:"top",
+      movableColumns:false,
+      resizableRows:false,
+      pagination:"local",
+      paginationSize:25,
+      layoutColumnsOnNewData:true,
+      initialSort:[
+        {column:"name", dir:"asc"},
+      ],
+      columns: [
+        {field:"name", title:"Name",
+          widthGrow: 5},
+        {field:"status", title:"Status",
+          widthGrow: 2},
+        {field:"last_scan", title:"Last Scan",
+          widthGrow: 2},
+        {field:"errors", title:"Last Error",
+          widthGrow: 2},
+        {field:"view", title:"", formatter:"link", formatterParams:{label: "view"}, widthGrow: 1},
+        {field:"edit", title:"", formatter:"link", formatterParams:{label: "edit"}, widthGrow: 1},
+        {field:"url", title:"", formatter:"link", formatterParams:{label: "EULA"}, widthGrow: 1},
+      ]
+    });
+    loadData();
+  };
+  </script>
+{% endblock %}
+
+{% block content %}
+<div><a href="/company/new">add new company</a></div>
+<div id="search-box">
+  <input type="text" id="searchbox" placeholder="filter by copany name" onkeyup="update_filter()" />
+</div>
+<div id="company-table"></div>
+{% endblock %}
