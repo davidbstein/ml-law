@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import SingletonThreadPool
 import time
 
-eng = create_engine("sqlite:////Users/stein/repos/ml-law/eula-scan/TOS.sqlite", poolclass=SingletonThreadPool)
+eng = create_engine("sqlite:////home/ubuntu/ml-law/eula-scan/TOS.sqlite", poolclass=SingletonThreadPool)
 
 
 def _ex(statement, params=None):
@@ -72,7 +72,7 @@ def create_company(name, url, settings, ):
 def update_company(company_id, name, url, settings):
     _ex("""
         UPDATE company
-        SET name=?, url=?, settings=? last_error=null
+        SET name=?, url=?, settings=?, last_error=null
         WHERE id=?
         """,
         (name, url, json.dumps(settings), company_id))

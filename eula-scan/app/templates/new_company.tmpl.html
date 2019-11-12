@@ -5,22 +5,46 @@
 {% block head %}
   <script>
   var res;
-    function preview() {
-      var target_url = document.getElementById("company-url").value;
-      var filter_start = document.getElementById("filter-start").value;
-      var filter_end = document.getElementById("filter-end").value;
-      fetch(new Request("/preview"), {
-        method: "POST",
-        body: JSON.stringify({url: target_url})
-      })
-      .then(r => r.json())
-      .then((response) => {
-        res = response;
-        var start_idx = response.indexOf(filter_start);
-        var end_idx = response.lastIndexOf(filter_end);
-        var filtered_response = response.substring(start_idx, end_idx+filter_end.length);
+  function preview() {
+    var target_url = document.getElementById("company-url").value;
+    var filter_start = document.getElementById("filter-start").value;
+    var filter_end = document.getElementById("filter-end").value;
+    fetch(new Request("/preview"), {
+      method: "POST",
+      body: JSON.stringify({url: target_url})
+    })
+    .then(r => r.json())
+    .then((response) => {
+      res = response;
+      var start_idx = response.indexOf(filter_start);
+      var end_idx = response.lastIndexOf(filter_end);
+      var filtered_response = response.substring(start_idx, end_idx+filter_end.length);
+      document.getElementById("preview-target").innerHTML = filtered_response;
+    });
+
+    function debounce(func, wait, immediate) {
+      var timeout;
+      return function() {
+        var context = this, args = arguments;
+        var later = function() {
+          timeout = null;
+          if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+      };
+    };
+
+    refilter = debounce(function () {
+        var filter_start = document.getElementById("filter-start").value;
+        var filter_end = document.getElementById("filter-end").value;
+        var start_idx = res.indexOf(filter_start);
+        var end_idx = res.lastIndexOf(filter_end);
+        var filtered_response = res.substring(start_idx, end_idx+filter_end.length);
         document.getElementById("preview-target").innerHTML = filtered_response;
-      });
+      }, 200, false);
     }
   </script>
 {% endblock %}
@@ -76,5 +100,9 @@
     <h2>Preview:</h2>
     <div id="preview-target" class="viewbox-content"></div>
   </div>
-  <script> preview(); </script>
+  <script>
+    preview();
+    document.getElementById("filter-start").onkeypress = refilter;
+    document.getElementById("filter-end").onkeypress = refilter;
+  </script>
 {% endblock %}

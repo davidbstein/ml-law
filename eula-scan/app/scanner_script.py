@@ -12,7 +12,7 @@ def scan_company(id):
 def scan_all_companies():
   companies = list_companies()
   for i, company in enumerate(companies):
-    print("scanning {} of {}".format(i, len(companies)))
+    print("scanning {} of {}: {}".format(i, len(companies), company.get('name')))
     scan_company(company['id'])
 
 if __name__ == "__main__":
