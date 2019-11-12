@@ -24,8 +24,10 @@ def scan_company_tos(company_id):
         tos = _pull_TOS(url)
     except Exception as e:
         print("HANDING ERROR...")
-        flag_company_error(company_id, "{}: {}".format(type(e), e))
+        flag_company_error(company_id, "In attempting to download the link, got the following error \n{}: {}".format(type(e), e))
         return False
+    if ("TERMS OF SERVICE" not in tos.get("text").UPPER()) and ("PRIVACY POLICY" not in tos.get("text").UPPER()):
+        flag_company_error(company_id, "contents do not appear to be a TOS, EULA, or Privacy Policy. Please check URL")
     lookup_TOS(company_id)
     update_result = _do_update_check(company_id)
     update_last_scan(company_id)
