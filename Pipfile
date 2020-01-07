@@ -6,15 +6,18 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-jupyter = "*"
-scipy = "*"
-numpy = "*"
-tensorflow = "*"
 requests = "*"
 flask = "*"
 bs4 = "*"
 sqlalchemy = "*"
 cacheout = "*"
+html5lib = "*"
+jupyter = "*"
+psycopg2 = "*"
+psycopg2-binary = "*"
+memcached = "*"
+pymemcache = "*"
+python-memcached = "*"
 
 [requires]
 python_version = "3.7"

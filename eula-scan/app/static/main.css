@@ -48,7 +48,9 @@ body {
 #company-info, #company-settings {
   margin: 16px 0;
 }
-
+b {
+    font-weight: bolder;
+}
 .company-input-form {
   display: flex;
   flex-wrap: wrap;
@@ -101,12 +103,16 @@ body {
   padding: 8px;
   cursor: pointer;
 }
+.delta-change-count {
+  float: right;
+}
 .delta-content, .original-content {
   padding: 8px;
   overflow-y: hidden;
 }
 .hidden-content .delta-content, .hidden-content .original-content {
   height: 0px;
+  padding: 2px;
 }
 .diff_next {
   display: none;
@@ -137,10 +143,15 @@ tr:hover {
 .diff_sub {
   background: #afa;
 }
+.diff_chg {
+  background: #fe0;
+}
 .original-content {
   white-space: pre-wrap;
 }
-
+tbody {
+        border-bottom: 16px solid #e8cbfb;
+}
 
 code {
   color: #57068c;

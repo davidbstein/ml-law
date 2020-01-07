@@ -4,12 +4,14 @@ from flask import (
   jsonify,
   request,
   redirect,
+  make_response,
 )
+import io
+import csv
 import difflib
 import json
 from cacheout import Cache
 from helpers import (
-  cleanup_terms_instance,
   demo_scan,
   scan_company_tos,
 )
@@ -19,6 +21,7 @@ from model import (
   list_companies,
   lookup_company,
   lookup_TOS,
+  lookup_next_TOS,
   lookup_URL,
   update_company,
 )
@@ -66,12 +69,38 @@ def company_view(id):
     return render_template(
       "company_view.tmpl.html",
       company_info=company_info['company'],
-      terms=[
-        cleanup_terms_instance(t, company_info['company']['settings'])
-        for t in company_info['terms']
-        ],
+      terms=company_info['terms'],
       )
 
+@app.route("/company/<id>/delta/<timestamp>")
+def get_company_delta(id, timestamp):
+    company_info = lookup_company
+    current_terms = lookup_next_TOS(id, timestamp)
+    a = current_terms['text']
+    previous_terms = lookup_TOS(id, current_terms['timestamp'])
+    b = previous_terms and previous_terms['text']
+    if a and b:
+        table = difflib.HtmlDiff().make_table(
+            a.split('\n'), b.split('\n'),
+            "new", "old", True, 2
+          )
+        count = len(difflib.HtmlDiff(
+          ).make_table(
+            a.split('\n'), b.split('\n'),
+            "new", "old", True, 0
+          ).split("/tr")) - 2
+    else:
+        table = a or b
+        count = 0
+    return jsonify(dict(
+        current_terms=current_terms,
+        previous_terms=previous_terms,
+        count=count,
+        table=table,
+        ts=timestamp,
+        company_id=id
+    ))
+    
 @app.route("/company/<id>/edit")
 def update_company_view(id):
     """ the form that goes withthe update_company"""
@@ -97,8 +126,12 @@ def company_force_scan(id):
 
 @app.route("/preview", methods=["POST"])
 def preview():
-  data = json.loads(request.data)
-  return json.dumps(demo_scan(data['url']).get("text"))
+  try:
+      data = json.loads(request.data)
+      return json.dumps(demo_scan(data['url']).get("text"))
+  except Exception as e:
+      return json.dumps(str(e))
+
 
 @app.route("/company/new")
 def create_company_view():
@@ -114,6 +147,19 @@ def create_company_submit():
     })
     return redirect("/company/{}".format(id), code=302)
 
+@app.route('/download_company_list')
+def download_company_list():
+    companies = list_companies()
+    si = io.StringIO()
+    cw = csv.DictWriter(si, fieldnames=companies[0].keys())
+    cw.writerows(companies)
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=company_list_{}.csv".format(
+        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%Sutc")
+    )
+    output.headers["Content-type"] = "text/csv"
+    return output
+
 
 @app.template_filter()
 def timestamp_formatter(ts):
@@ -126,6 +172,7 @@ def timestamp_formatter(ts):
 
 @app.context_processor
 def add_context_vars():
+  @cache.memoize()
   def make_diff(a, b):
     return difflib.HtmlDiff(
         #wrapcolumn=80
@@ -133,8 +180,16 @@ def add_context_vars():
         a.split('\n'), b.split('\n'),
         "new", "old", True, 2
       )
+  def size_diff(a, b):
+    diff = difflib.HtmlDiff(
+      ).make_table(
+        a.split('\n'), b.split('\n'),
+        "new", "old", True, 0
+      )
+    return len(diff.split("/tr")) - 2
   return dict(
-    make_diff=cache.memoize()(make_diff)
+    make_diff=make_diff,
+    size_diff=size_diff,
   )
 
 if __name__ == '__main__':

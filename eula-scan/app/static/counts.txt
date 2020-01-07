@@ -1,0 +1,145 @@
+Wed Jan  1 15:34:32 UTC 2020
+Wed Jan  1 15:35:21 UTC 2020
+Wed Jan  1 15:35:57 UTC 2020
+Wed Jan  1 15:36:13 UTC 2020
+{'policies': 53656}
+{'companies': 8011}
+Wed Jan  1 16:36:39 UTC 2020
+{'policies': 53860}
+{'companies': 8011}
+Wed Jan  1 17:37:04 UTC 2020
+{'policies': 54049}
+{'companies': 8011}
+Wed Jan  1 18:37:29 UTC 2020
+{'policies': 54331}
+{'companies': 8011}
+Wed Jan  1 19:37:45 UTC 2020
+{'policies': 54523}
+{'companies': 8011}
+Wed Jan  1 20:38:00 UTC 2020
+{'policies': 54566}
+{'companies': 8011}
+Wed Jan  1 21:38:15 UTC 2020
+{'policies': 54613}
+{'companies': 8011}
+Wed Jan  1 22:38:29 UTC 2020
+{'policies': 54709}
+{'companies': 8010}
+Wed Jan  1 23:38:44 UTC 2020
+{'policies': 54884}
+{'companies': 8010}
+Thu Jan  2 00:38:59 UTC 2020
+{'policies': 54821}
+{'companies': 8010}
+Thu Jan  2 01:39:13 UTC 2020
+{'policies': 54862}
+{'companies': 8010}
+Thu Jan  2 02:39:28 UTC 2020
+{'policies': 54957}
+{'companies': 8010}
+Thu Jan  2 03:39:49 UTC 2020
+{'policies': 55619}
+{'companies': 8987}
+Thu Jan  2 04:40:05 UTC 2020
+{'policies': 56116}
+{'companies': 8982}
+Thu Jan  2 05:40:20 UTC 2020
+{'policies': 56555}
+{'companies': 8980}
+Thu Jan  2 06:40:35 UTC 2020
+{'policies': 56921}
+{'companies': 8978}
+Thu Jan  2 07:40:52 UTC 2020
+{'policies': 57170}
+{'companies': 8973}
+Thu Jan  2 08:41:08 UTC 2020
+{'policies': 57389}
+{'companies': 8970}
+Thu Jan  2 09:41:23 UTC 2020
+{'policies': 57642}
+{'companies': 8966}
+Thu Jan  2 10:41:38 UTC 2020
+{'policies': 57929}
+{'companies': 8956}
+Thu Jan  2 11:41:53 UTC 2020
+{'policies': 58131}
+{'companies': 8955}
+Thu Jan  2 12:42:08 UTC 2020
+{'policies': 58455}
+{'companies': 8952}
+Thu Jan  2 13:42:23 UTC 2020
+{'policies': 58848}
+{'companies': 8945}
+Thu Jan  2 14:42:39 UTC 2020
+{'policies': 59117}
+{'companies': 8941}
+Thu Jan  2 15:42:55 UTC 2020
+{'policies': 59464}
+{'companies': 8939}
+Thu Jan  2 16:43:11 UTC 2020
+{'policies': 59858}
+{'companies': 8929}
+Thu Jan  2 17:43:27 UTC 2020
+{'policies': 60022}
+{'companies': 8928}
+Thu Jan  2 18:43:42 UTC 2020
+{'policies': 60168}
+{'companies': 8926}
+Thu Jan  2 19:43:57 UTC 2020
+{'policies': 60251}
+{'companies': 8922}
+Thu Jan  2 20:44:12 UTC 2020
+{'policies': 60252}
+{'companies': 8922}
+Thu Jan  2 21:44:27 UTC 2020
+{'policies': 60270}
+{'companies': 8921}
+Thu Jan  2 22:44:42 UTC 2020
+{'policies': 60278}
+{'companies': 8918}
+Thu Jan  2 23:44:56 UTC 2020
+{'policies': 60393}
+{'companies': 8915}
+Fri Jan  3 00:45:06 UTC 2020
+{'policies': 60706}
+{'companies': 9336}
+Fri Jan  3 01:45:08 UTC 2020
+{'policies': 61247}
+{'companies': 9328}
+Fri Jan  3 02:45:10 UTC 2020
+{'policies': 61700}
+{'companies': 10302}
+Fri Jan  3 03:45:11 UTC 2020
+{'policies': 62209}
+{'companies': 10287}
+Fri Jan  3 04:45:13 UTC 2020
+{'policies': 62482}
+{'companies': 10281}
+Fri Jan  3 05:45:15 UTC 2020
+{'policies': 62698}
+{'companies': 10280}
+Fri Jan  3 06:45:18 UTC 2020
+{'policies': 62972}
+{'companies': 10272}
+Fri Jan  3 07:45:22 UTC 2020
+{'policies': 63232}
+{'companies': 10256}
+Fri Jan  3 08:45:33 UTC 2020
+{'policies': 63507}
+{'companies': 10253}
+Fri Jan  3 09:45:49 UTC 2020
+{'policies': 63756}
+{'companies': 10251}
+Fri Jan  3 10:46:05 UTC 2020
+{'policies': 63974}
+{'companies': 10248}
+Fri Jan  3 11:46:21 UTC 2020
+{'policies': 64215}
+{'companies': 10247}
+Fri Jan  3 12:46:36 UTC 2020
+{'policies': 64501}
+{'companies': 10243}
+Fri Jan  3 13:46:52 UTC 2020
+{'policies': 64878}
+{'companies': 10238}
+Fri Jan  3 14:47:17 UTC 2020

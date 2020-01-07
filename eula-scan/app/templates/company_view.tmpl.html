@@ -62,6 +62,69 @@
 {% macro build_changes_list(terms_list) %}
   <div class="viewbox-content">
     {% if terms_list | length > 0 %}
+    <!--div class="delta-view hidden-content">
+      {% set terms = terms_list[0] %}
+      <div class="delta-heading"
+            id="current-content-block"
+            onclick="toggle_hidden('current-content-block')">
+        most recent scan: {{ terms['start_date'] | timestamp_formatter }}
+      </div>
+      <div class="original-content">
+        terms['text']
+      </div>
+    </div-->
+    {% for terms_idx in (range(terms_list|length - 1)) %}
+      {% set terms = terms_list[terms_idx] %}
+      {% set next_terms = terms_list[terms_idx+1] %}
+      <div class="delta-view hidden-content">
+        <div class="delta-heading"
+              id="{{terms['start_date']}}"
+              onclick="toggle_hidden({{terms['start_date']}})">
+            + <b>{{ terms['start_date'] | timestamp_formatter }}</b>
+            <span class="delta-change-count" id="{{terms['start_date']}}count"> loading... </span>
+        </div>
+        <div class="delta-content" id="{{terms['start_date']}}table">
+        </div>
+      </div>
+    {% endfor %}
+    <div class="delta-view hidden-content">
+      {% set terms = terms_list[terms_list|length-1] %}
+      <div class="delta-heading"
+            id="{{terms['start_date']}}"
+            onclick="toggle_hidden({{terms['start_date']}})">
+        Original scan on: {{ terms['start_date'] | timestamp_formatter }}
+          <span class="delta-change-count" id="{{terms['start_date']}}count"> loading... </span>
+      </div>
+      <div class="original-content" id="{{terms['start_date']}}table">
+        
+      </div>
+    </div>
+      
+    {% else %}
+      this has never been scanned.
+    {% endif %}
+  </div>
+<script>
+    (function(){
+        const ts_list = [{% for t in terms_list %} {{t['start_date']}}, {% endfor %} undefined];
+        ts_list.pop();                                                                 
+        for (ts of ts_list) {
+            fetch(new Request("/company/{{company_info['id']}}/delta/"+ts))
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data.count);
+                document.getElementById(""+data.ts+"count").innerText = ""+data.count+(data.count != 1 ? " changes" : " change");
+                document.getElementById(""+data.ts+"table").innerHTML = data.table;
+            });
+        }
+    })();
+</script>
+{%- endmacro %}
+
+
+
+
+{#
     <div class="delta-view hidden-content">
       {% set terms = terms_list[0] %}
       <div class="delta-heading"
@@ -80,7 +143,8 @@
         <div class="delta-heading"
               id="{{terms['start_date']}}"
               onclick="toggle_hidden({{terms['start_date']}})">
-          + Changes from {{ terms['start_date'] | timestamp_formatter }}
+          + {{ size_diff(terms['text'], next_terms['text']) }}
+Changes from {{ terms['start_date'] | timestamp_formatter }}
         </div>
         <div class="delta-content">
           {{ make_diff(terms['text'], next_terms['text']) | safe }}
@@ -98,8 +162,6 @@
         {{ terms['text'] }}
       </div>
     </div>
-    {% else %}
-      this has never been scanned.
-    {% endif %}
-  </div>
-{%- endmacro %}
+
+
+#}

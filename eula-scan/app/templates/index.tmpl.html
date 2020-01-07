@@ -16,8 +16,8 @@
             view: `/company/${e.id}`,
             edit: `/company/${e.id}/edit`,
             status: e.last_error ? "broken" : e.last_scan ? "scanner working" : "never scanned",
-            last_scan:  e.last_scan ? new Date(e.last_scan * 1000) : undefined,
-            errors: e.last_error ? new Date(e.last_error * 1000) : undefined,
+            last_scan:  e.last_scan ? (new Date(e.last_scan * 1000)).toISOString() : undefined,
+            errors: e.last_error ? (new Date(e.last_error * 1000)).toISOString() : undefined,
             url: e.url,
           }
         }
@@ -70,7 +70,7 @@
           widthGrow: 2},
         {field:"view", title:"", formatter:"link", formatterParams:{label: "view"}, widthGrow: 1},
         {field:"edit", title:"", formatter:"link", formatterParams:{label: "edit"}, widthGrow: 1},
-        {field:"url", title:"", formatter:"link", formatterParams:{label: "EULA"}, widthGrow: 1},
+        {field:"url", title:"", formatter:"link", formatterParams:{label: "Privacy Policy Link"}, widthGrow: 1},
       ]
     });
     loadData();
