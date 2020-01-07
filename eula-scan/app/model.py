@@ -19,16 +19,6 @@ def _ex(statement, params=None):
         to_ret = _c.execute(statement, *params)
     return to_ret
 
-def _local_ex(statement, params=None):
-    eng = create_engine("sqlite:////home/ubuntu/ml-law/eula-scan/TOS.sqlite", poolclass=SingletonThreadPool)
-    c=eng.connect()
-    if not params:
-        to_ret = c.execute(statement)
-    else:
-        to_ret = c.execute(statement, params)
-    c.close()
-    return to_ret
-
 
 def list_companies():
     return list(map(dict, _ex(_COMPANY.select())))
@@ -116,6 +106,14 @@ def flag_company_error(company_id, error_message):
     _ex(_COMPANY.update()
         .where(_COMPANY.c.id==company_id)
         .values(last_error=int(time.time()), status=error_message)
+    )
+    return _ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone().id
+
+
+def clear_company_error(company_id):
+    _ex(_COMPANY.update()
+        .where(_COMPANY.c.id==company_id)
+        .values(last_error=None, status=None)
     )
     return _ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone().id
 
