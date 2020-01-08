@@ -104,7 +104,6 @@
 {% endblock %}
 
 {% block content %}
-<div><a href="/datepicker/1577750400/1577923200"> explore changes by date </a></div>
-  <div><a href="/company/new">add new company</a></div>
+<div><a href="/company/new">add new company</a></div>
 <div id="company-table"></div>
 {% endblock %}

@@ -1,7 +1,11 @@
 import sqlite3
 import json
-from sqlalchemy import create_engine, MetaData, select
-from sqlalchemy.pool import SingletonThreadPool
+from sqlalchemy import (
+    create_engine,
+    MetaData,
+    select,
+    func,
+    )
 import time
 
 _db_uri = json.load(open("/home/ubuntu/passwords.json"))['DB_URI']
@@ -23,6 +27,36 @@ def _ex(statement, params=None):
 def list_companies():
     return list(map(dict, _ex(_COMPANY.select())))
 
+
+def number_of_companies():
+    return _ex(select([func.count(_COMPANY.c.id)])).fetchone().count_1
+
+
+def _gen_clause(filter):
+    if filter['type'] == 'like':
+        return _COMPANY.c[filter['field']].contains(filter.get("value", ""))
+
+def get_companies(size, page, sorters=None, filters=None):
+    query = _COMPANY.select()
+    if sorters:
+        query = query.order_by(*[
+            getattr(_COMPANY.c[sorters[i]['field']], sorters[i]['dir'])().nullslast()
+            for i in range(len(sorters))
+        ])
+    whereclause = _COMPANY.c.changes_recorded > 1
+    if filters:
+        whereclause &= _gen_clause(filters[0])
+    query = query.where(whereclause)
+    resp = _ex(query.limit(size * page))
+    holder = [None] * size
+    idx = 0
+    for r in resp:
+        holder[idx] = r
+        idx = (idx + 1) % size
+    to_ret = []
+    for jdx in range(size):
+        to_ret.append(dict(holder[(idx+jdx)%size]))
+    return to_ret
 
 def lookup_next_TOS(company_id, start_time):
     whereclause = (
@@ -67,6 +101,10 @@ def lookup_URL(company_id, ):
     return _ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone().url
 
 
+def get_company(company_id):
+    company = dict(_ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone())
+    return company
+
 def lookup_company(company_id):
     company = dict(_ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone())
     terms = list(map(dict,
@@ -82,6 +120,23 @@ def lookup_company(company_id):
         "company": company,
         "terms": terms,
     }
+
+def lookup_changes(start_ts, end_ts):
+    company_filter = set(r.id for r in _ex(select([_COMPANY.c.id]).where(
+        (_COMPANY.c.first_scan < start_ts) &
+        (_COMPANY.c.alexa_rank < 100000) &
+        (_COMPANY.c.changes_recorded > 2)
+    )))
+    terms = [t for t in map(dict,
+        _ex(
+            select([_TOS.c.start_date, _TOS.c.company_id])
+            .where((_TOS.c.start_date > start_ts) & (_TOS.c.start_date < end_ts))
+        )
+        ) if t['company_id'] in company_filter
+    ]
+    return {
+        "terms": sorted(terms, key=lambda e: e['start_date']),
+        }
 
 def lookup_company_metadata(company_id):
     return dict(_ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone())

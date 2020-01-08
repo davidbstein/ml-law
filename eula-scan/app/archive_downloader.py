@@ -39,7 +39,8 @@ def pull_history(company_id, earliest_ts=0):
     n=len(archive_rows)
     count = 0
     for i, ar in enumerate(reversed(archive_rows)):
-        logger.warning("{}/{}".format(i,n))
+        if not i%10:
+            logger.warning("{}/{}".format(i,n))
         logger.info(ar['timestamp'])
         count += helpers._process_archived_TOS(company_row, ar)
 
@@ -65,16 +66,6 @@ def fix_repeats(company_id):
         print("break")
         break
 
-        
-def get_oldest_companies(limit=100):
-    for r in model._ex(C_TABLE.select().order_by(C_TABLE.c.last_scan).limit(limit)):
-        yield r
-        
-def run_company_update(company):
-    pull_history(company.id, earliest_ts=company.last_scan)
-    fix_repeats(company.id)
-    helpers.scan_company_tos(company.id)
-    model.update_last_scan(company.id)
 
 killer = queue.Queue()
 def counter(q):
@@ -109,10 +100,71 @@ def scanner(q):
             import traceback
             logging.warn(traceback.format_exc())
             model.flag_company_error(company_id, "integrety check not performed")
-    print("THREAD TERMINATED")
+    logger.warn("THREAD TERMINATED")
     
+        
+def get_oldest_companies(limit=100):
+    query = (
+        model._COMPANY.select()
+        .where((model._COMPANY.c.last_scan < time.time() - (60 * 60 * 24)) & (model._COMPANY.c.last_scan != None))
+        .order_by(model._COMPANY.c.last_scan)
+        .limit(limit)
+    )
+    for r in model._ex(query):
+        yield r
 
-def old_main():
+                
+def get_unscanned_companies(limit=100):
+    query = (
+        model._COMPANY.select()
+        .where((model._COMPANY.c.last_scan == None) & (model._COMPANY.c.last_error == None))
+        .limit(limit)
+    )
+    for r in model._ex(query):
+        yield r
+
+def run_company_update(company):
+    pull_history(company.id, earliest_ts=(company.last_scan or 0))
+    fix_repeats(company.id)
+    helpers.scan_company_tos(company.id)
+    model.update_last_scan(company.id)
+
+def updater(q):
+    while not q.empty():
+        try:
+            company = q.get_nowait()
+            logger.warn("{} -- http://eula-scan.davidbstein.com/company/{}".format(company.name, company.id))
+            run_company_update(company)
+        except:
+            import traceback
+            logging.warn(traceback.format_exc())
+            model.flag_company_error(company.id, "integrety check not performed")
+    logger.warn("THREAD TERMINATED")
+    
+def updater_main(limit, thread_count):
+    q = queue.Queue()
+    count_thread = threading.Thread(target=counter, args=(q,))
+    count_thread.start()
+
+    for c in get_oldest_companies(limit=limit):
+        q.put(c)
+
+    for c in get_unscanned_companies(limit=limit):
+        q.put(c)
+        
+    threads = []
+    for _ in range(thread_count):
+        threads.append(threading.Thread(target=updater, kwargs={"q":q}))
+        threads[-1].start()
+
+    for thread in threads:
+        thread.join()
+    killer.put(1)
+    print("DONE")
+    count_thread.join()
+
+
+def scanner_main():
     print(model._ex("select max(id) from company").fetchone())
     q = queue.Queue()
     count_thread = threading.Thread(target=counter, args=(q,))
@@ -121,7 +173,6 @@ def old_main():
     LIMIT = 500
     THREAD_COUNT = 35  
     
-    id_list = []
     dataset_table = model._meta.tables['polisis_dataset'];
     for r in model._ex(dataset_table.select().where(dataset_table.c.status==3).limit(LIMIT)):
         i = model.create_company(
@@ -129,7 +180,6 @@ def old_main():
         )
         model._ex("update polisis_dataset set status=4 where id={}".format(r.id))
         q.put(i)
-        id_list.append(i)
 
     threads = []
     for _ in range(THREAD_COUNT):
@@ -142,3 +192,10 @@ def old_main():
     print("DONE")
     count_thread.join()
 
+
+if __name__ == '__main__':
+    LIMIT = 11
+    THREAD_COUNT = 35  
+
+    updater_main(LIMIT, THREAD_COUNT)
+    

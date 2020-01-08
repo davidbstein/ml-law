@@ -41,8 +41,6 @@ def scan_company_tos(company_id, prefix="", lock=_lock):
         return False
     logger.debug("{} - saving...".format(prefix))
     with lock:
-        if ("TERMS OF SERVICE" not in tos.get("text").upper()) and ("PRIVACY POLICY" not in tos.get("text").upper()):
-            flag_company_error(company_id, "contents do not appear to be a TOS, EULA, or Privacy Policy. Please check URL")
         lookup_TOS(company_id)
         update_result = _do_update_check(company_id, new_tos=tos)
         update_last_scan(company_id)

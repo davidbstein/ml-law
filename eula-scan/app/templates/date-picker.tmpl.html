@@ -1,0 +1,77 @@
+{% extends "base.tmpl.html" %}
+
+{% block title %} View Changes in Date Range  {% endblock %}
+
+{% block head %}
+  <script>
+    function toggle_hidden(e_id){
+    console.log(e_id);
+    var el = document.getElementById(e_id);
+    el.parentElement.classList.toggle("hidden-content")
+  }
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div id="ci-company-name">
+    <h1>See all changes from timerange</h1>
+    <input type="date" id="start_date" min="2000-01-01">
+    <input type="date" id="end_date" min="2000-01-01">
+    <button onclick="new_range()"> submit </button>
+    <script>
+      document.getElementById('start_date').value = new Date({{start_date}}*1000).toISOString().split('T')[0];
+      document.getElementById('end_date').value = new Date({{end_date}}*1000).toISOString().split('T')[0];
+      function new_range(){
+      var a = Date.parse(new Date(document.getElementById('start_date').value)) / 1000;
+      var b = Date.parse(new Date(document.getElementById('end_date').value)) / 1000;
+      if (a > b) window.location=("/datepicker/" + b + "/" + a);
+      else window.location=("/datepicker/" + a + "/" + b);
+      }
+    </script>
+  </div>
+
+
+  <div id="deltas" class="viewbox">
+    <h2> history of changes </h2>
+    {{build_changes_list(terms)}}
+  </div>
+{% endblock %}
+
+{% macro build_changes_list(terms_list) %}
+  <div class="viewbox-content">
+    {% if terms_list | length > 0 %}
+      {% for terms_idx in (range(terms_list|length - 1)) %}
+        {% set terms = terms_list[terms_idx] %}
+        <div class="delta-view hidden-content">
+          <div class="delta-heading"
+                id="{{terms['start_date']}}-{{terms['company_id']}}"
+                onclick="toggle_hidden('{{terms['start_date']}}-{{terms['company_id']}}')">
+            + <b>{{ terms['start_date'] | timestamp_formatter }}</b>
+	    <span class="delta-company-name" id="{{terms['start_date']}}-{{terms['company_id']}}name"> loading company with id {{terms['company_id']}}... </span>
+              <span class="delta-change-count" id="{{terms['start_date']}}-{{terms['company_id']}}count"> loading... </span>
+          </div>
+          <div class="delta-content" id="{{terms['start_date']}}-{{terms['company_id']}}table">
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      no changes indexed on this range.
+    {% endif %}
+  </div>
+<script>
+    (function(){
+        const ts_list = [{% for t in terms_list %} [{{t['start_date']}}, {{t['company_id']}}], {% endfor %} undefined];
+        ts_list.pop();                                                                 
+        for (ts of ts_list) {
+            fetch(new Request("/company/"+ ts[1] +"/delta/"+ts[0]))
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data.count);
+                document.getElementById(""+data.ts+"-"+data.company_id+"count").innerText = ""+data.count+(data.count != 1 ? " changes" : " change");
+                document.getElementById(""+data.ts+"-"+data.company_id+"table").innerHTML = "<p><a href='/company/"+data.company.id+"'>Go to "+data.company.name+" page</a></p>" + data.table;
+                document.getElementById(""+data.ts+"-"+data.company_id+"name").innerText = data.company.name;
+            });
+        }
+    })();
+</script>
+{%- endmacro %}

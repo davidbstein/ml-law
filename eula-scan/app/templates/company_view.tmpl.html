@@ -26,6 +26,8 @@
       TOS url: <a href="{{company_info['url']}}">{{company_info['url']}}</a>
     </div><div id="ci-last-scan">
       Last Scanned: {{company_info['last_scan'] | timestamp_formatter}}
+    </div><div id="ci-last-scan">
+      parent site traffic ranking: {{company_info['alexa_rank']}}
     </div>
     {% if company_info['last_error'] %}
     <div id="ci-last-error">
@@ -114,7 +116,12 @@
             .then((data) => {
                 console.log(data.count);
                 document.getElementById(""+data.ts+"count").innerText = ""+data.count+(data.count != 1 ? " changes" : " change");
-                document.getElementById(""+data.ts+"table").innerHTML = data.table;
+		document.getElementById(""+data.ts+"table").innerHTML = (
+		    "<P><a href='/datepicker/"+
+		    (ts - (60*60*24*3)) + "/" +
+		    (ts + (60*60*24*3))
+		    +"'>view other TOS changes made on this week</a></P>"+data.table
+		);
             });
         }
     })();
@@ -122,46 +129,3 @@
 {%- endmacro %}
 
 
-
-
-{#
-    <div class="delta-view hidden-content">
-      {% set terms = terms_list[0] %}
-      <div class="delta-heading"
-            id="current-content-block"
-            onclick="toggle_hidden('current-content-block')">
-        most recent scan: {{ terms['start_date'] | timestamp_formatter }}
-      </div>
-      <div class="original-content">
-        {{ terms['text'] }}
-      </div>
-    </div>
-    {% for terms_idx in (range(terms_list|length - 1)) %}
-      {% set terms = terms_list[terms_idx] %}
-      {% set next_terms = terms_list[terms_idx+1] %}
-      <div class="delta-view hidden-content">
-        <div class="delta-heading"
-              id="{{terms['start_date']}}"
-              onclick="toggle_hidden({{terms['start_date']}})">
-          + {{ size_diff(terms['text'], next_terms['text']) }}
-Changes from {{ terms['start_date'] | timestamp_formatter }}
-        </div>
-        <div class="delta-content">
-          {{ make_diff(terms['text'], next_terms['text']) | safe }}
-        </div>
-      </div>
-    {% endfor %}
-    <div class="delta-view hidden-content">
-      {% set terms = terms_list[terms_list|length-1] %}
-      <div class="delta-heading"
-            id="{{terms['start_date']}}"
-            onclick="toggle_hidden({{terms['start_date']}})">
-        Original scan on: {{ terms['start_date'] | timestamp_formatter }}
-      </div>
-      <div class="original-content">
-        {{ terms['text'] }}
-      </div>
-    </div>
-
-
-#}

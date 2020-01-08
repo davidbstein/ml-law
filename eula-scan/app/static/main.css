@@ -153,6 +153,9 @@ tbody {
         border-bottom: 16px solid #e8cbfb;
 }
 
+.tabulator .tabulator-tableHolder .tabulator-table {
+}
+
 code {
   color: #57068c;
   font-weight: bold;
