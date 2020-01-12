@@ -9,6 +9,8 @@ import string
 import time
 logger = logging.getLogger()
 
+WORDS = set(open("/usr/share/dict/words").read().upper().split())
+
 from model import (
     add_TOS,
     backdate_TOS,
@@ -20,7 +22,8 @@ from model import (
     lookup_URL,
     lookup_next_TOS,
     update_company,
-    update_last_scan
+    update_last_scan,
+    update_first_scan,
 )
 
 import threading
@@ -41,8 +44,6 @@ def scan_company_tos(company_id, prefix="", lock=_lock):
         return False
     logger.debug("{} - saving...".format(prefix))
     with lock:
-        if ("TERMS OF SERVICE" not in tos.get("text").upper()) and ("PRIVACY POLICY" not in tos.get("text").upper()):
-            flag_company_error(company_id, "contents do not appear to be a TOS, EULA, or Privacy Policy. Please check URL")
         lookup_TOS(company_id)
         update_result = _do_update_check(company_id, new_tos=tos)
         update_last_scan(company_id)
@@ -112,6 +113,12 @@ def _is_text(txt):
         return False
     if any(txt.upper().startswith(s.upper()) for s in opening_phrases):
         return False
+    wordlist = txt.translate(str.maketrans('', '', string.punctuation)).split()
+    not_english = sum(word.upper() not in WORDS for word in wordlist)
+    if not_english >= len(wordlist) // 3 and not_english >= 4:
+        return False
+    if not_english >= 20:
+        return False
     return True
 
 
@@ -127,7 +134,7 @@ def _clean_text(txt):
         if len(p.split()) > 10:
             to_ret.extend("{}.".format(s) for s in p.split('. '))
             if not p.endswith('.'):
-                to_ret[0] = to_ret[0][:-1]
+                to_ret[-1] = to_ret[-1][:-1]
         else:
             to_ret.append(p)
     return "\n".join(to_ret)
@@ -198,9 +205,10 @@ def _do_update_check(company_id, new_tos=None):
 def _is_english(txt, threshold=.7):
     if "This translation is provided for convenience only and the English language version will control in the event of any discrepancies." in txt:
         return False
+    if "Your use of the Wayback Machine is subject to the Internet Archive's Terms of Use" in txt:
+        return False
     if "This banner text can have markup." in txt:
         return False
-    words = set(open("/usr/share/dict/words").read().upper().split())
     word_list = (txt.upper()
         .translate(str.maketrans('', '', string.punctuation))
         .translate(str.maketrans('', '', string.digits))
@@ -208,13 +216,13 @@ def _is_english(txt, threshold=.7):
     )
     if not len(word_list):
         return False
-    return sum(w in words for w in word_list) / len(word_list) > threshold    
+    return sum(w in WORDS for w in word_list) / len(word_list) > threshold    
 
 
 def _process_archived_TOS(company_row, archive_object):
     current_pull = _pull_TOS("http://web.archive.org/web/{timestamp}/{original}".format(**archive_object))
     if not 'text' in current_pull:
-        logger.error("======\nerror: {}\n{}".format(json.dumps(current_pull, indent='  '), json.dumps(archive_object, indent='  ')))
+        logger.info("======\nerror: {}\n{}".format(json.dumps(current_pull, indent='  '), json.dumps(archive_object, indent='  ')))
         return 0
     if not _is_english(current_pull['text']):
         logger.debug("not english")
@@ -231,6 +239,10 @@ def _process_archived_TOS(company_row, archive_object):
         logger.debug("unchanged") # back up timestamp
         backdate_TOS(next_pull['tos_id'], timestamp)
         return 0
+    if company_row.last_scan < timestamp:
+        update_last_scan(company_row.id, last_scan=timestamp)
+    if company_row.first_scan < timestamp:
+        update_first_scan(company_row.id, first_scan=timestamp)
 
 
 def _enumerate_company_archive(company_row):
@@ -249,6 +261,8 @@ def _enumerate_company_archive(company_row):
         except Exception as e:
             logger.error('http://web.archive.org/cdx/search/cdx -- ' + company_row['url'])
             raise e
+        if len(output) == 0:
+            return all_rows
         keys = output[0]
         end_idx = None
         if output[-2] == []:
@@ -261,7 +275,7 @@ def _enumerate_company_archive(company_row):
 
 
 def pull_company_from_wayback_machine(company_id, latest=None):
-    company_row = model.lookup_company_metadata(143)
+    company_row = model.lookup_company_metadata(company_id)
     archive_rows = helpers._enumerate_company_archive(company_row)
     for ar in reversed(archive_rows):
         logger.debug('scanning {}'.format(ar['timestamp']))

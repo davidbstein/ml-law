@@ -16,14 +16,16 @@ from helpers import (
   scan_company_tos,
 )
 from model import (
-  add_TOS,
-  create_company,
-  list_companies,
-  lookup_company,
-  lookup_TOS,
-  lookup_next_TOS,
-  lookup_URL,
-  update_company,
+    add_TOS,
+    create_company,
+    get_companies,
+    list_companies,
+    lookup_company,
+    lookup_TOS,
+    lookup_next_TOS,
+    lookup_URL,
+    number_of_companies,
+    update_company,
 )
 import datetime
 
@@ -45,6 +47,23 @@ def company_list_json():
     return jsonify(list_companies())
 
 # date range: start_date < target, end_date > target OR NOT end_date
+
+@app.route("/ajaxTableEndpoint")
+def ajax_table_endpoint():
+    params = json.loads(request.args.get('params'))
+    size = params.get('size', 25)
+    page = params.get('page', 1)
+    sorters = params.get('sorters', [])
+    filters = params.get('filters', [])
+    data = get_companies(size, page, sorters, filters)
+    return jsonify({
+        "last_page": 1 + number_of_companies() // size,
+        "data": data,
+        "srt": sorters,
+        "f": filters,
+        "p": page,
+        "s": size,
+    })
 
 @app.route("/changes")
 def change_browser():
@@ -100,7 +119,7 @@ def get_company_delta(id, timestamp):
         ts=timestamp,
         company_id=id
     ))
-    
+
 @app.route("/company/<id>/edit")
 def update_company_view(id):
     """ the form that goes withthe update_company"""

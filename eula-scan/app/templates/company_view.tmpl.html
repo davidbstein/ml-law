@@ -26,6 +26,8 @@
       TOS url: <a href="{{company_info['url']}}">{{company_info['url']}}</a>
     </div><div id="ci-last-scan">
       Last Scanned: {{company_info['last_scan'] | timestamp_formatter}}
+    </div><div id="ci-last-scan">
+      parent site traffic ranking: {{company_info['alexa_rank']}}
     </div>
     {% if company_info['last_error'] %}
     <div id="ci-last-error">

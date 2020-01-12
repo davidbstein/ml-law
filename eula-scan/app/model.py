@@ -1,7 +1,11 @@
 import sqlite3
 import json
-from sqlalchemy import create_engine, MetaData, select
-from sqlalchemy.pool import SingletonThreadPool
+from sqlalchemy import (
+    create_engine,
+    MetaData,
+    select,
+    func,
+    )
 import time
 
 _db_uri = json.load(open("/home/ubuntu/passwords.json"))['DB_URI']
@@ -23,6 +27,35 @@ def _ex(statement, params=None):
 def list_companies():
     return list(map(dict, _ex(_COMPANY.select())))
 
+
+def number_of_companies():
+    return _ex(select([func.count(_COMPANY.c.id)])).fetchone().count_1
+
+
+def _gen_clause(filter):
+    if filter['type'] == 'like':
+        return _COMPANY.c[filter['field']].contains(filter.get("value", ""))
+
+def get_companies(size, page, sorters=None, filters=None):
+    query = _COMPANY.select()
+    if sorters:
+        query = query.order_by(*[
+            getattr(_COMPANY.c[sorters[i]['field']], sorters[i]['dir'])().nullslast()
+            for i in range(len(sorters))
+        ])
+    if filters:
+        whereclause = _gen_clause(filters[0])
+        query = query.where(whereclause)
+    resp = _ex(query.limit(size * page))
+    holder = [None] * size
+    idx = 0
+    for r in resp:
+        holder[idx] = r
+        idx = (idx + 1) % size
+    to_ret = []
+    for jdx in range(size):
+        to_ret.append(dict(holder[(idx+jdx)%size]))
+    return to_ret
 
 def lookup_next_TOS(company_id, start_time):
     whereclause = (
@@ -121,6 +154,10 @@ def update_last_scan(company_id, last_scan=None, ):
     if not last_scan:
         last_scan = time.time()
     _ex(_COMPANY.update().where(_COMPANY.c.id==company_id).values(last_scan=last_scan))
+    return _ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone().id
+
+def update_first_scan(company_id, first_scan):
+    _ex(_COMPANY.update().where(_COMPANY.c.id==company_id).values(first_scan=first_scan))
     return _ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone().id
 
 def add_TOS(company_id, text, current_time, ):
