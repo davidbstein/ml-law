@@ -43,9 +43,10 @@ def get_companies(size, page, sorters=None, filters=None):
             getattr(_COMPANY.c[sorters[i]['field']], sorters[i]['dir'])().nullslast()
             for i in range(len(sorters))
         ])
+    whereclause = _COMPANY.c.changes_recorded > 1
     if filters:
-        whereclause = _gen_clause(filters[0])
-        query = query.where(whereclause)
+        whereclause &= _gen_clause(filters[0])
+    query = query.where(whereclause)
     resp = _ex(query.limit(size * page))
     holder = [None] * size
     idx = 0
@@ -100,6 +101,10 @@ def lookup_URL(company_id, ):
     return _ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone().url
 
 
+def get_company(company_id):
+    company = dict(_ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone())
+    return company
+
 def lookup_company(company_id):
     company = dict(_ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone())
     terms = list(map(dict,
@@ -115,6 +120,23 @@ def lookup_company(company_id):
         "company": company,
         "terms": terms,
     }
+
+def lookup_changes(start_ts, end_ts):
+    company_filter = set(r.id for r in _ex(select([_COMPANY.c.id]).where(
+        (_COMPANY.c.first_scan < start_ts) &
+        (_COMPANY.c.alexa_rank < 100000) &
+        (_COMPANY.c.changes_recorded > 2)
+    )))
+    terms = [t for t in map(dict,
+        _ex(
+            select([_TOS.c.start_date, _TOS.c.company_id])
+            .where((_TOS.c.start_date > start_ts) & (_TOS.c.start_date < end_ts))
+        )
+        ) if t['company_id'] in company_filter
+    ]
+    return {
+        "terms": sorted(terms, key=lambda e: e['start_date']),
+        }
 
 def lookup_company_metadata(company_id):
     return dict(_ex(_COMPANY.select().where(_COMPANY.c.id==company_id)).fetchone())

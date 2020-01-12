@@ -116,7 +116,12 @@
             .then((data) => {
                 console.log(data.count);
                 document.getElementById(""+data.ts+"count").innerText = ""+data.count+(data.count != 1 ? " changes" : " change");
-                document.getElementById(""+data.ts+"table").innerHTML = data.table;
+		document.getElementById(""+data.ts+"table").innerHTML = (
+		    "<P><a href='/datepicker/"+
+		    (ts - (60*60*24*3)) + "/" +
+		    (ts + (60*60*24*3))
+		    +"'>view other TOS changes made on this week</a></P>"+data.table
+		);
             });
         }
     })();
@@ -124,6 +129,7 @@
 {%- endmacro %}
 
 
+<<<<<<< HEAD
 
 
 {#
@@ -167,3 +173,5 @@ Changes from {{ terms['start_date'] | timestamp_formatter }}
 
 
 #}
+=======
+>>>>>>> b6d5cb79175842799b4f7e01b34b56187168dcb5

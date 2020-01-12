@@ -19,7 +19,9 @@ from model import (
     add_TOS,
     create_company,
     get_companies,
+    get_company,
     list_companies,
+    lookup_changes,
     lookup_company,
     lookup_TOS,
     lookup_next_TOS,
@@ -91,9 +93,19 @@ def company_view(id):
       terms=company_info['terms'],
       )
 
+@app.route("/datepicker/<frm>/<to>")
+def datepicker(frm, to):
+    date_info = lookup_changes(frm, to)
+    return render_template(
+        "date-picker.tmpl.html",
+        terms=date_info['terms'],
+        start_date=frm,
+        end_date=to,
+      )
+
 @app.route("/company/<id>/delta/<timestamp>")
 def get_company_delta(id, timestamp):
-    company_info = lookup_company
+    company_info = get_company(id)
     current_terms = lookup_next_TOS(id, timestamp)
     a = current_terms['text']
     previous_terms = lookup_TOS(id, current_terms['timestamp'])
@@ -117,7 +129,8 @@ def get_company_delta(id, timestamp):
         count=count,
         table=table,
         ts=timestamp,
-        company_id=id
+        company_id=id,
+        company=company_info
     ))
 
 @app.route("/company/<id>/edit")
